@@ -24,9 +24,10 @@ import Std;
 class Main extends Sprite {
 	
 	private var dimension:Int = 128;
-	private var pixelSize:Float = 8.0;
+	private var pixelSize:Float = 20.0;
 	private var image:Bitmap;
 	private var background:Bitmap;
+	private var picker:Bitmap;
 	private var pixels:BitmapData;
 	private var pixelsBuffer:BitmapData;
 	private var pixelsBackground:BitmapData;
@@ -42,15 +43,18 @@ class Main extends Sprite {
 	private var movingLeft:Bool = false;
 	private var movingRight:Bool = false;
 	private var mouseClic:Bool = false;
+	
+	private var pickingColor:Bool = true;
+	private var brushColor:UInt = 0x00000000;
 
 	static inline private var MAX_SPEED:Float = 200.0;
-
-	static inline private var colorRed = 0xffa64c4c;
-	static inline private var colorGreen = 0xffa6dc4c;
-	static inline private var colorBlue = 0xff4c97dc;
-	static inline private var colorYellow = 0xffffc515;
+	
+	static inline private var colorRed = 0xffA64C4C;
+	static inline private var colorGreen = 0xffA6DC4C;
+	static inline private var colorBlue = 0xff4C97DC;
+	static inline private var colorYellow = 0xffFFC515;
 	static inline private var colorWhite = 0xffffffff;
-	static inline private var colorAlive = 0xFFCCCCCC;
+	static inline private var colorAlive = 0x77000000;
 	static inline private var colorDead = 0x00000000;
 	
 	public function new () {
@@ -59,47 +63,50 @@ class Main extends Sprite {
 		
 		background = new Bitmap (Assets.getBitmapData ("assets/map.png"));
 		addChild(background);
-		//background.x = background.y = 0.0;
 		background.scaleX = background.scaleY = pixelSize;
-
+		
 		pixels = new BitmapData(dimension, dimension, true, colorDead);
 		pixelsBuffer = new BitmapData(dimension, dimension, true, colorDead);
 		image = new Bitmap(pixels, PixelSnapping.NEVER, false);
 		addChild(image);
-
+		
 		pixelsBackground = background.bitmapData;
 		
 		image.x = image.y = 0.0;
 		image.scaleX = image.scaleY = pixelSize;
-
+		
 		for ( i in 0...dimension*dimension) {
 			var color = Math.random() > 0.9 ? colorAlive : colorDead;
 			pixels.setPixel32((i + Math.floor(i/dimension)) % dimension, Math.floor(i/dimension), color);
 			pixelsBuffer.setPixel32((i + Math.floor(i/dimension)) % dimension, Math.floor(i/dimension), color);
 		}
-
-		timer = new Timer (500);
-        timer.addEventListener(TimerEvent.TIMER, onTimer);
-        timer.start();
-
-        debug = new TextField();
-        debug.autoSize = TextFieldAutoSize.LEFT;
-        var format:TextFormat = new TextFormat();
-        format.font = "Verdana";
-        format.color = 0xff0000;
-        format.size = 10;
-        debug.defaultTextFormat = format;
-        //addChild(debug);
-
-        fps = new FPS(10, 10, 0xff0000);
-        addChild(fps);
-
-        timeLast = Lib.getTimer();
+		
+		picker = new Bitmap(new BitmapData(1, 1, true, 0xffff0000));
+		picker.scaleX = picker.scaleY = pixelSize;
+		addChild(picker);
+		
+		timer = new Timer (300);
+		timer.addEventListener(TimerEvent.TIMER, onTimer);
+		timer.start();
+		
+		debug = new TextField();
+		debug.autoSize = TextFieldAutoSize.LEFT;
+		var format:TextFormat = new TextFormat();
+		format.font = "Verdana";
+		format.color = 0xff0000;
+		format.size = 10;
+		debug.defaultTextFormat = format;
+		//addChild(debug);
+		
+		fps = new FPS(10, 10, 0xff0000);
+		addChild(fps);
+		
+		timeLast = Lib.getTimer();
 		addEventListener(Event.ENTER_FRAME, onEnterFrame);
-
+		
 		stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
 		stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
-
+		
 		image.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
 		image.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
 	}
@@ -112,24 +119,51 @@ class Main extends Sprite {
 			var y = Math.floor(i / dimension); 
 			var pixelColor:String = StringTools.hex(pixels.getPixel32(x, y));
 			var backgroundColor:String = StringTools.hex(pixelsBackground.getPixel32(x, y));
-			var countAround:Int = howManyAround(x, y, colorAlive);
-
+			var countAround:Int = howManyAroundNot(x, y, colorDead);
+			
 			// Zone check
+			
+			// green 
 			if (backgroundColor == StringTools.hex(colorGreen)) {
-
-				// translation
-
-				if (StringTools.hex(pixelsBuffer.getPixel32(x, y)) == StringTools.hex(colorAlive)) {
+				
+				// translation left to right and bottom to up
+				if (StringTools.hex(pixelsBuffer.getPixel32(x, y)) != StringTools.hex(colorDead)) {
+					
 					pixels.setPixel32(x, y, colorDead);
-					pixels.setPixel32(x + 1, y, colorAlive);
+					
+					// right & up right
+					if (StringTools.hex(pixels.getPixel32(x + 1, y)) == StringTools.hex(colorDead)) {
+						pixels.setPixel32(x + 1, y, colorAlive);
+					} else if (StringTools.hex(pixels.getPixel32(x + 1, y - 1)) == StringTools.hex(colorDead)) {
+						pixels.setPixel32(x + 1, y - 1, colorAlive);
+					} else {
+						pixels.setPixel32(x, y, colorAlive);
+					}
 				}
-
+				
+			// red
+			} else if (backgroundColor == StringTools.hex(colorRed)) {
+				
+				if (StringTools.hex(pixelsBuffer.getPixel32(x, y)) != StringTools.hex(colorDead)) {
+					
+					pixels.setPixel32(x, y, colorDead);
+					
+					// right & bottom right
+					if (StringTools.hex(pixels.getPixel32(x - 1, y)) == StringTools.hex(colorDead)) {
+							pixels.setPixel32(x - 1, y, colorAlive);
+					} else if (StringTools.hex(pixels.getPixel32(x - 1, y + 1)) == StringTools.hex(colorDead)) {
+						pixels.setPixel32(x - 1, y + 1, colorAlive);
+					} else {
+						pixels.setPixel32(x, y, colorAlive);
+					}
+				}
+				
 			} else if (backgroundColor == StringTools.hex(colorWhite)) {
-
+				
 				// game of life
-
+				
 				// current is alive
-				if (pixelColor == StringTools.hex(colorAlive)) {
+				if (pixelColor != StringTools.hex(colorDead)) {
 					// die
 					if (countAround != 2 && countAround != 3) {
 						pixels.setPixel32(x, y, colorDead);	
@@ -153,6 +187,7 @@ class Main extends Sprite {
 			case Keyboard.S: movingDown = true;
 			case Keyboard.A: movingLeft = true;
 			case Keyboard.D: movingRight = true;
+			case Keyboard.SPACE: pickingColor = true;
 		}
 	}
 
@@ -162,6 +197,7 @@ class Main extends Sprite {
 			case Keyboard.S: movingDown = false;
 			case Keyboard.A: movingLeft = false;
 			case Keyboard.D: movingRight = false;
+			case Keyboard.SPACE: pickingColor = false;
 		}
 	}
 
@@ -171,16 +207,29 @@ class Main extends Sprite {
 
 	private function onMouseUp(event:MouseEvent):Void {
 		mouseClic = false;
+		pickingColor = true;
 	}
 
-	private var accelerator:Float = 2.0;
-	private var deccelerator:Float = 0.9;
+	private var accelerator:Float = 1.5;
+	private var deccelerator:Float = 0.95;
 	private function onEnterFrame(event:Event):Void {
 
 		//debug.text = "mouse X : " + image.mouseX + " mouse Y : " + image.mouseY;
 
 		if (mouseClic) {
-			pixels.setPixel32(Math.floor(image.mouseX), Math.floor(image.mouseY), 0xffcccccc);
+			var x = Math.floor(background.mouseX);
+			var y = Math.floor(background.mouseY);
+			if (pickingColor) {
+				brushColor = pixelsBackground.getPixel32(x, y);
+				pickingColor = false;
+			}
+			//else {
+				pixelsBackground.setPixel32(x, y, brushColor);
+				pixelsBackground.setPixel32(x, y-1, brushColor);
+				pixelsBackground.setPixel32(x-1, y, brushColor);
+				pixelsBackground.setPixel32(x, y+1, brushColor);
+				pixelsBackground.setPixel32(x+1, y, brushColor);
+			//}
 		}
 
 		//image.x = 100.0 + Math.cos(Lib.getTimer() * 0.001) * 20.0;
@@ -193,7 +242,7 @@ class Main extends Sprite {
 			if (velocityY <= 0.0) { velocityY = 1.0; }
 			velocityY = Math.min(MAX_SPEED, velocityY * accelerator);
 		} else {
-			if (velocityY <= -0.001 && velocityY >= 0.001) {
+			if (velocityY <= -0.01 || velocityY >= 0.01) {
 				velocityY = velocityY * deccelerator;
 			} else {
 				velocityY = 0.0;
@@ -206,7 +255,7 @@ class Main extends Sprite {
 			if (velocityX <= 0.0) { velocityX = 1; }
 			velocityX = Math.min(MAX_SPEED, velocityX * accelerator);
 		} else {
-			if (velocityX <= -0.001 && velocityX >= 0.001) {
+			if (velocityX <= -0.01 || velocityX >= 0.01) {
 				velocityX = velocityX * deccelerator;
 			} else {
 				velocityX = 0.0;
@@ -229,6 +278,26 @@ class Main extends Sprite {
 					if (testPosition(x + row, y + col)) {
 						if ((row == 0 && col == 0) == false)  {
 							if (StringTools.hex(pixelsBuffer.getPixel32(x + row, y + col)) == StringTools.hex(target)) {
+								count++;
+							}
+						}
+					}
+				}
+			}
+			return count;
+		} else {
+			return -1;
+		}
+	}
+
+	private function howManyAroundNot(x:Int, y:Int, target:UInt):Int {
+		var count:Int = 0;
+		if (testPosition(x, y)) {
+			for (row in -1...2) {
+				for (col in -1...2) {
+					if (testPosition(x + row, y + col)) {
+						if ((row == 0 && col == 0) == false)  {
+							if (StringTools.hex(pixelsBuffer.getPixel32(x + row, y + col)) != StringTools.hex(target)) {
 								count++;
 							}
 						}

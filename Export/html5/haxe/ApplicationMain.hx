@@ -61,6 +61,24 @@ import flash.Lib;
 		
 		
 		
+		var urlLoader = new URLLoader ();
+		urlLoader.dataFormat = BINARY;
+		urlLoaders.set("assets/map.xcf", urlLoader);
+		total ++;
+		
+		
+		
+		var image = new Image ();
+		id = "assets/map_agents.png";
+		images.set (id, image);
+		image.onload = image_onLoad;
+		image.src = id;
+		//var loader:Loader = new Loader();
+		//loaders.set("assets/map_agents.png", loader);
+		total ++;
+		
+		
+		
 		var image = new Image ();
 		id = "assets/openfl.png";
 		images.set (id, image);

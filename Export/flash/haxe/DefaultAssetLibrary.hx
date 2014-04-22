@@ -39,10 +39,6 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		className.set ("assets/map.png", __ASSET__assets_map_png);
 		type.set ("assets/map.png", Reflect.field (AssetType, "image".toUpperCase ()));
-		className.set ("assets/map.xcf", __ASSET__assets_map_xcf);
-		type.set ("assets/map.xcf", Reflect.field (AssetType, "binary".toUpperCase ()));
-		className.set ("assets/map_agents.png", __ASSET__assets_map_agents_png);
-		type.set ("assets/map_agents.png", Reflect.field (AssetType, "image".toUpperCase ()));
 		className.set ("assets/openfl.png", __ASSET__assets_openfl_png);
 		type.set ("assets/openfl.png", Reflect.field (AssetType, "image".toUpperCase ()));
 		
@@ -50,8 +46,6 @@ class DefaultAssetLibrary extends AssetLibrary {
 		#elseif html5
 		
 		addExternal("assets/map.png", "image", "assets/map.png");
-		addExternal("assets/map.xcf", "binary", "assets/map.xcf");
-		addExternal("assets/map_agents.png", "image", "assets/map_agents.png");
 		addExternal("assets/openfl.png", "image", "assets/openfl.png");
 		
 		
@@ -619,14 +613,10 @@ class DefaultAssetLibrary extends AssetLibrary {
 #elseif flash
 
 @:keep class __ASSET__assets_map_png extends flash.display.BitmapData { public function new () { super (0, 0, true, 0); } }
-@:keep class __ASSET__assets_map_xcf extends null { }
-@:keep class __ASSET__assets_map_agents_png extends flash.display.BitmapData { public function new () { super (0, 0, true, 0); } }
 @:keep class __ASSET__assets_openfl_png extends flash.display.BitmapData { public function new () { super (0, 0, true, 0); } }
 
 
 #elseif html5
-
-
 
 
 

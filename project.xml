@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project>
 	
-	<meta title="Displaying a Bitmap" package="org.openfl.samples.displayingabitmap" version="1.0.0" company="OpenFL Technologies" />
-	<app main="Main" path="Export" file="DisplayingABitmap" />
+	<meta title="Pixel Surgeon Prototype" package="fr.leon" version="1.0.0" company="" />
+	<app main="Main" path="Export" file="PixelSurgeon" />
 	
 	<source path="Source" />
 	

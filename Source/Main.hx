@@ -5,6 +5,7 @@ import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.display.Sprite;
 import flash.display.PixelSnapping;
+import flash.geom.Rectangle;
 import flash.text.TextField;
 import flash.text.TextFieldAutoSize;
 import flash.text.TextFormat;
@@ -12,6 +13,7 @@ import flash.events.Event;
 import flash.events.TimerEvent;
 import flash.events.KeyboardEvent;
 import flash.events.MouseEvent;
+import flash.utils.ByteArray;
 import flash.utils.Timer;
 import flash.Lib;
 import flash.ui.Keyboard;
@@ -64,7 +66,7 @@ class Main extends Sprite {
 	static inline private var colorOrange = 0xffff7d15;
 	static inline private var colorGreenDark = 0xff527d15;
 	
-	static inline private var colorAlive = 0x77000000;
+	static inline private var colorAlive = 0xff000000;
 	static inline private var colorDead = 0x00000000;
 	
 	public function new () {
@@ -122,8 +124,8 @@ class Main extends Sprite {
 				g.beginFill(0xffffff, 0.5);
 				g.drawRect(tfColor.x, tfColor.y, tfColor.text.length * 5.5, 20);
 				g.endFill();
-				scene.addChild(textBackground);
-				scene.addChild(tfColor);
+				//scene.addChild(textBackground);
+				//scene.addChild(tfColor);
 				debugCellsCount.push(tfColor);
 				cellsCount.push(1);
 			} else {
@@ -168,21 +170,21 @@ class Main extends Sprite {
 		stage.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
 	}
 	
-	private function cellCountAdd(indexColor:UInt) {
+	private function cellCountAdd(indexColor:Int) {
 		if (indexColor != -1) {
 			cellsCount[indexColor]++;
 		}
 	}
 	
-	private function applyRule(agents:BitmapData, background:BitmapData, x:Int, y:Int, birth:Array<Int>, survive:Array<Int>, newColor:UInt) {
-		var colorAgent:String = StringTools.hex(agents.getPixel32(x, y));
+	private function applyRule(x:Int, y:Int, birth:Array<Int>, survive:Array<Int>, newColor:UInt) {
+		var colorAgent:String = StringTools.hex(pixelsBuffer.getPixel32(x, y));
 		var indexColor:Int = colors.indexOf(pixelsBackground.getPixel(x, y));
-		var countAround:Int = howManyAroundNotAndIn(x, y, colorDead, pixelsBackground.getPixel32(x, y));
+		var countAround:Int = howManyAroundNot(x, y, colorDead);
 		// Births
 		if (colorAgent == StringTools.hex(colorDead)) {
 			for (i in 0...birth.length) {
 				if (birth[i] == countAround) {
-					agents.setPixel32(x, y, newColor);
+					pixels.setPixel32(x, y, newColor);
 					cellCountAdd(indexColor);
 					break;
 				}
@@ -198,140 +200,82 @@ class Main extends Sprite {
 					break;
 				}
 			} if (willSurvive == false) {
-				agents.setPixel32(x, y, colorDead);
+				pixels.setPixel32(x, y, colorDead);
 			}
 		}
 	}
+	
+	private function moveFromTo(fromX:Int, fromY:Int, offsetX:Int, offsetY:Int, newColor:UInt):Void
+	{
+		pixels.setPixel32(fromX, fromY, colorDead);
+		pixels.setPixel32(fromX + offsetX, fromY + offsetY, newColor);
+	}
+	
+	private function colorLighter(color:UInt):UInt
+	{
+		//return (((color >> 24) - 0x10)) << 24 | (color >> 16) << 16 | ((color >> 8) & 0xFF) << 8 | (color & 0xFF);
+		if (((color >> 24) & 0xFF) < 10) {
+			return colorDead;
+		}
+		return ((color >> 24) - 0x08) << 24;
+	}
 
 	private function onTimer(event:TimerEvent):Void {
-		for ( i in 0...colors.length ) {
-			cellsCount[i] = 0;
-		}
-		pixels.lock();
+		//for ( i in 0...colors.length ) {
+			//cellsCount[i] = 0;
+		//}
+		pixels.lock();	
 		pixelsBuffer = pixels.clone();
 		for ( i in 0...dimension*dimension) {
 			var x = i % dimension;
 			var y = Math.floor(i / dimension); 
-			var pixelColor:String = StringTools.hex(pixels.getPixel32(x, y));
+			var pixelColor:String = StringTools.hex(pixelsBuffer.getPixel32(x, y));
 			var backgroundColor:String = StringTools.hex(pixelsBackground.getPixel32(x, y));
 			var countAround:Int = howManyAroundNot(x, y, colorDead);
-			
+			//var colorsAround:Array<UInt> = whichColorsAreHere(x, y);
 			// Zone check
 			
-			// green 
-			if (backgroundColor == StringTools.hex(colorGreen)) {
-				
-				if (StringTools.hex(pixelsBuffer.getPixel32(x, y)) != StringTools.hex(colorDead)) {
-					
-					pixels.setPixel32(x, y, colorDead);
-					
-					if ((StringTools.hex(pixelsBackground.getPixel32(x, y-1)) == StringTools.hex(colorGreen)
-					|| StringTools.hex(pixelsBackground.getPixel32(x - 1, y - 1)) == StringTools.hex(colorGreenDark))
-					&& StringTools.hex(pixels.getPixel32(x, y-1)) == StringTools.hex(colorDead))
-					{
-						pixels.setPixel32(x, y-1, colorAlive);
-					}
-					else if ((StringTools.hex(pixelsBackground.getPixel32(x+1, y-1)) == StringTools.hex(colorGreen)
-					|| StringTools.hex(pixelsBackground.getPixel32(x - 1, y - 1)) == StringTools.hex(colorGreenDark))
-					&& StringTools.hex(pixels.getPixel32(x+1, y-1)) == StringTools.hex(colorDead))
-					{
-						pixels.setPixel32(x+1, y-1, colorAlive);
-					}
-					else if ((StringTools.hex(pixelsBackground.getPixel32(x - 1, y - 1)) == StringTools.hex(colorGreen)
-					|| StringTools.hex(pixelsBackground.getPixel32(x - 1, y - 1)) == StringTools.hex(colorGreenDark))
-					&& StringTools.hex(pixels.getPixel32(x-1, y-1)) == StringTools.hex(colorDead))
-					{
-						pixels.setPixel32(x-1, y-1, colorAlive);
-					}
-					else
-					{
-						pixels.setPixel32(x, y, colorAlive);
-					}
+			// Cellular Automaton
+			if (backgroundColor == StringTools.hex(colorRed) || howManyAroundInBackground(x, y, colorRed) > 2)
+			{
+				applyRule(x, y, [1, 3, 5, 7], [1, 3, 5, 7], colorAlive);
+			}
+			
+			// Translation
+			
+			if (pixelColor != StringTools.hex(colorDead))
+			{
+			
+				if (backgroundColor == StringTools.hex(colorOrange))
+				{
+					moveFromTo(x, y, -1, 0, colorAlive);// colorLighter(pixelsBuffer.getPixel32(x, y)));
 				}
-				
-			}
-			else if (backgroundColor == StringTools.hex(colorRedDark)) {
-				
-				if (StringTools.hex(pixelsBuffer.getPixel32(x, y)) != StringTools.hex(colorDead)) {
-					
-					pixels.setPixel32(x, y, colorDead);
-					
-					if (StringTools.hex(pixelsBackground.getPixel32(x, y+1)) == StringTools.hex(colorRedDark)
-					&& StringTools.hex(pixels.getPixel32(x, y+1)) == StringTools.hex(colorDead))
-					{
-						pixels.setPixel32(x, y+1, colorAlive);
-					}
-					else if (StringTools.hex(pixelsBackground.getPixel32(x+1, y+1)) == StringTools.hex(colorRedDark)
-					&& StringTools.hex(pixels.getPixel32(x+1, y+1)) == StringTools.hex(colorDead))
-					{
-						pixels.setPixel32(x+1, y+1, colorAlive);
-					}
-					else if (StringTools.hex(pixelsBackground.getPixel32(x-1, y+1)) == StringTools.hex(colorRedDark)
-					&& StringTools.hex(pixels.getPixel32(x-1, y+1)) == StringTools.hex(colorDead))
-					{
-						pixels.setPixel32(x-1, y+1, colorAlive);
-					}
-					else
-					{
-						pixels.setPixel32(x, y, colorAlive);
-					}
+				else if (backgroundColor == StringTools.hex(colorGreen))
+				{
+					moveFromTo(x, y, 0, -1, colorAlive);
 				}
-			}
-			// B1357 / S1357
-			else if (backgroundColor == StringTools.hex(colorRed))
-			{
-				applyRule(pixels, pixelsBackground, x, y, [1, 3, 5, 7], [1, 3, 5, 7], colorAlive);
-			}
-			// B25 / S4
-			else if (backgroundColor == StringTools.hex(colorBlue))
-			{
-				applyRule(pixels, pixelsBackground, x, y, [2, 5], [4], colorAlive);
-			}
-			// B3 / S012345678
-			else if (backgroundColor == StringTools.hex(colorYellow))
-			{
-				applyRule(pixels, pixelsBackground, x, y, [3], [0, 1, 2, 3, 4, 5, 6, 7, 8], colorAlive);
-			} 
-			// B34 / S34
-			else if (backgroundColor == StringTools.hex(colorPurple))
-			{
-				applyRule(pixels, pixelsBackground, x, y, [3, 4], [3, 4], colorAlive);
-			}
-			// B35678 / S5678
-			else if (backgroundColor == StringTools.hex(colorBlueDark))
-			{
-				applyRule(pixels, pixelsBackground, x, y, [3, 5, 6, 7, 8], [5, 6, 7, 8], colorAlive);
-			}
-			// B36 / S125
-			else if (backgroundColor == StringTools.hex(colorPurpleDark)) 
-			{
-				applyRule(pixels, pixelsBackground, x, y, [3, 6], [1, 2, 5], colorAlive);
-			}
-			// B3678 / S34678
-			else if (backgroundColor == StringTools.hex(colorOrange))
-			{
-				applyRule(pixels, pixelsBackground, x, y, [3, 6, 7, 8], [3, 4, 6, 7, 8], colorAlive);
-			}
-			// B368 / S245
-			else if (backgroundColor == StringTools.hex(colorGreenDark))
-			{
-				//applyRule(pixels, pixelsBackground, x, y, [3, 6, 8], [2, 4, 5], colorAlive);
-				applyRule(pixels, pixelsBackground, x, y, [1, 2, 3, 4, 5, 6, 7, 8], [0, 1, 2, 3, 4, 5, 6, 7, 8], colorAlive);
-			} 
-			// B3 / S23 (Conway Game of Life)
-			else if (backgroundColor == StringTools.hex(colorWhite)) 
-			{
-				//applyRule(pixels, pixelsBackground, x, y, [3], [2, 3], colorAlive);
-				pixels.setPixel32(x, y, colorDead);
+				else if (backgroundColor == StringTools.hex(colorYellow))
+				{
+					moveFromTo(x, y, 0, 1, colorAlive);
+				}
+				else if (backgroundColor == StringTools.hex(colorBlue))
+				{
+					moveFromTo(x, y, 1, 0, colorAlive);
+				}
+				else if (backgroundColor == StringTools.hex(colorWhite))
+				{
+					pixels.setPixel32(x, y, colorDead);
+				}
+			
 			}
 		}
 		pixelsBuffer = pixels.clone();
 		pixels.unlock();
 		
-		for ( i in 0...cellsCount.length) {
-			var tfColor = debugCellsCount[i];
-			tfColor.text = "" + cellsCount[i];
-		}
+		//for ( i in 0...cellsCount.length) {
+			//var tfColor = debugCellsCount[i];
+			//tfColor.text = "" + cellsCount[i];
+		//}
 	}
 
 	private function onKeyDown(event:KeyboardEvent):Void {
@@ -426,6 +370,15 @@ class Main extends Sprite {
 		scene.y -= velocityY * delta;
 		timeLast = Lib.getTimer();
 	}
+	
+	private function whichColorsAreHere(x:Int, y:Int):Array<UInt> {
+		var colorsArray:Array<UInt> = new Array<UInt>();
+		var pixelsArray:ByteArray = pixelsBuffer.getPixels(new Rectangle(x - 1, y - 1, 3, 3));
+		for (i in 0...pixelsArray.length) {
+			colorsArray.push(pixelsArray[i]);
+		}
+		return colorsArray;
+	}
 
 	private function howManyAround(x:Int, y:Int, target:UInt):Int {
 		var count:Int = 0;
@@ -467,6 +420,27 @@ class Main extends Sprite {
 		}
 	}
 
+	private function howManyAroundInBackground(x:Int, y:Int, colorTarget:UInt):Int
+	{
+		var count:Int = 0;
+		if (testPosition(x, y)) {
+			for (row in -1...2) {
+				for (col in -1...2) {
+					if (testPosition(x + row, y + col)) {
+						if ((row == 0 && col == 0) == false)  {
+							if (StringTools.hex(pixelsBackground.getPixel32(x + row, y + col)) == StringTools.hex(colorTarget)) {
+								count++;
+							}
+						}
+					}
+				}
+			}
+			return count;
+		} else {
+			return -1;
+		}
+	}
+	
 	private function howManyAroundNotAndIn(x:Int, y:Int, target:UInt, colorEnvironment:UInt):Int {
 		var count:Int = 0;
 		if (testPosition(x, y)) {
@@ -514,3 +488,93 @@ class Main extends Sprite {
 	
 	
 }
+
+/*
+ * 
+ * RULES
+ * 
+			// red dark
+			if (backgroundColor == StringTools.hex(colorRedDark)) {
+				
+				if (StringTools.hex(pixelsBuffer.getPixel32(x, y-1)) != StringTools.hex(colorDead)) {
+					pixels.setPixel32(x, y-1, colorDead);
+				}
+			}
+			// B25 / S4
+			else if (backgroundColor == StringTools.hex(colorBlue))
+			{
+				applyRule(pixels, pixelsBackground, x, y, [2, 5], [4], colorAlive);
+			}
+			// B3 / S012345678
+			else if (backgroundColor == StringTools.hex(colorYellow))
+			{
+				applyRule(pixels, pixelsBackground, x, y, [3], [0, 1, 2, 3, 4, 5, 6, 7, 8], colorAlive);
+			} 
+			// B34 / S34
+			else if (backgroundColor == StringTools.hex(colorPurple))
+			{
+				applyRule(pixels, pixelsBackground, x, y, [3, 4], [3, 4], colorAlive);
+			}
+			// B35678 / S5678
+			else if (backgroundColor == StringTools.hex(colorBlueDark))
+			{
+				applyRule(pixels, pixelsBackground, x, y, [3, 5, 6, 7, 8], [5, 6, 7, 8], colorAlive);
+			}
+			// B36 / S125
+			else if (backgroundColor == StringTools.hex(colorPurpleDark)) 
+			{
+				applyRule(pixels, pixelsBackground, x, y, [3, 6], [1, 2, 5], colorAlive);
+			}
+			// B3678 / S34678
+			else if (backgroundColor == StringTools.hex(colorOrange))
+			{
+				applyRule(pixels, pixelsBackground, x, y, [3, 6, 7, 8], [3, 4, 6, 7, 8], colorAlive);
+			}
+			// B368 / S245
+			else if (backgroundColor == StringTools.hex(colorGreenDark))
+			{
+				//applyRule(pixels, pixelsBackground, x, y, [3, 6, 8], [2, 4, 5], colorAlive);
+				applyRule(pixels, pixelsBackground, x, y, [1, 2, 3, 4, 5, 6, 7, 8], [0, 1, 2, 3, 4, 5, 6, 7, 8], colorAlive);
+			} 
+			// B3 / S23 (Conway Game of Life)
+			else if (backgroundColor == StringTools.hex(colorWhite)) 
+			{
+				//applyRule(pixels, pixelsBackground, x, y, [3], [2, 3], colorAlive);
+				pixels.setPixel32(x, y, colorDead);
+			}
+			*/
+
+					/* 
+					 * 
+					 * Nice
+					pixels.setPixel32(x, y+1, colorDead);
+					pixels.setPixel32(x, y, colorAlive);
+					pixels.setPixel32(x, y - 1, colorAlive);
+					
+					*/
+					
+					/*
+					if ((StringTools.hex(pixelsBackground.getPixel32(x, y-1)) == StringTools.hex(colorGreen)
+					|| StringTools.hex(pixelsBackground.getPixel32(x - 1, y - 1)) == StringTools.hex(colorGreenDark))
+					&& StringTools.hex(pixels.getPixel32(x, y-1)) == StringTools.hex(colorDead))
+					{
+						pixels.setPixel32(x, y-1, colorAlive);
+					}
+					else if ((StringTools.hex(pixelsBackground.getPixel32(x+1, y-1)) == StringTools.hex(colorGreen)
+					|| StringTools.hex(pixelsBackground.getPixel32(x - 1, y - 1)) == StringTools.hex(colorGreenDark))
+					&& StringTools.hex(pixels.getPixel32(x+1, y-1)) == StringTools.hex(colorDead))
+					{
+						pixels.setPixel32(x+1, y-1, colorAlive);
+					}
+					else if ((StringTools.hex(pixelsBackground.getPixel32(x - 1, y - 1)) == StringTools.hex(colorGreen)
+					|| StringTools.hex(pixelsBackground.getPixel32(x - 1, y - 1)) == StringTools.hex(colorGreenDark))
+					&& StringTools.hex(pixels.getPixel32(x-1, y-1)) == StringTools.hex(colorDead))
+					{
+						pixels.setPixel32(x-1, y-1, colorAlive);
+					}
+					else
+					{
+						pixels.setPixel32(x, y, colorAlive);
+					}
+					
+					*/

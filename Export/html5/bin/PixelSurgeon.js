@@ -794,8 +794,6 @@ var Main = function() {
 			g.beginFill(16777215,0.5);
 			g.drawRect(tfColor.get_x(),tfColor.get_y(),tfColor.get_text().length * 5.5,20);
 			g.endFill();
-			this.scene.addChild(textBackground);
-			this.scene.addChild(tfColor);
 			this.debugCellsCount.push(tfColor);
 			this.cellsCount.push(1);
 		} else this.cellsCount[index]++;
@@ -834,26 +832,21 @@ Main.__name__ = true;
 Main.__super__ = flash.display.Sprite;
 Main.prototype = $extend(flash.display.Sprite.prototype,{
 	cellCountAdd: function(indexColor) {
-		if((function($this) {
-			var $r;
-			var $int = indexColor;
-			$r = $int < 0?4294967296.0 + $int:$int + 0.0;
-			return $r;
-		}(this)) != -1) this.cellsCount[indexColor]++;
+		if(indexColor != -1) this.cellsCount[indexColor]++;
 	}
-	,applyRule: function(agents,background,x,y,birth,survive,newColor) {
-		var colorAgent = StringTools.hex(agents.getPixel32(x,y));
+	,applyRule: function(x,y,birth,survive,newColor) {
+		var colorAgent = StringTools.hex(this.pixelsBuffer.getPixel32(x,y));
 		var indexColor;
 		var x1 = this.pixelsBackground.getPixel(x,y);
 		indexColor = HxOverrides.indexOf(this.colors,x1,0);
-		var countAround = this.howManyAroundNotAndIn(x,y,0,this.pixelsBackground.getPixel32(x,y));
+		var countAround = this.howManyAroundNot(x,y,0);
 		if(colorAgent == StringTools.hex(0)) {
 			var _g1 = 0;
 			var _g = birth.length;
 			while(_g1 < _g) {
 				var i = _g1++;
 				if(birth[i] == countAround) {
-					agents.setPixel32(x,y,newColor);
+					this.pixels.setPixel32(x,y,newColor);
 					this.cellCountAdd(indexColor);
 					break;
 				}
@@ -870,48 +863,47 @@ Main.prototype = $extend(flash.display.Sprite.prototype,{
 					break;
 				}
 			}
-			if(willSurvive == false) agents.setPixel32(x,y,0);
+			if(willSurvive == false) this.pixels.setPixel32(x,y,0);
 		}
 	}
+	,moveFromTo: function(fromX,fromY,offsetX,offsetY,newColor) {
+		this.pixels.setPixel32(fromX,fromY,0);
+		this.pixels.setPixel32(fromX + offsetX,fromY + offsetY,newColor);
+	}
+	,colorLighter: function(color) {
+		if((function($this) {
+			var $r;
+			var a = color >> 24 & 255;
+			$r = (function($this) {
+				var $r;
+				var aNeg = 10 < 0;
+				var bNeg = a < 0;
+				$r = aNeg != bNeg?aNeg:10 > a;
+				return $r;
+			}($this));
+			return $r;
+		}(this))) return 0;
+		return (color >> 24) - 8 << 24;
+	}
 	,onTimer: function(event) {
-		var _g1 = 0;
-		var _g = this.colors.length;
-		while(_g1 < _g) {
-			var i = _g1++;
-			this.cellsCount[i] = 0;
-		}
 		this.pixels.lock();
 		this.pixelsBuffer = this.pixels.clone();
-		var _g11 = 0;
-		var _g2 = this.dimension * this.dimension;
-		while(_g11 < _g2) {
-			var i1 = _g11++;
-			var x = i1 % this.dimension;
-			var y = Math.floor(i1 / this.dimension);
-			var pixelColor = StringTools.hex(this.pixels.getPixel32(x,y));
+		var _g1 = 0;
+		var _g = this.dimension * this.dimension;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var x = i % this.dimension;
+			var y = Math.floor(i / this.dimension);
+			var pixelColor = StringTools.hex(this.pixelsBuffer.getPixel32(x,y));
 			var backgroundColor = StringTools.hex(this.pixelsBackground.getPixel32(x,y));
 			var countAround = this.howManyAroundNot(x,y,0);
-			if(backgroundColor == StringTools.hex(-5841844)) {
-				if(StringTools.hex(this.pixelsBuffer.getPixel32(x,y)) != StringTools.hex(0)) {
-					this.pixels.setPixel32(x,y,0);
-					if((StringTools.hex(this.pixelsBackground.getPixel32(x,y - 1)) == StringTools.hex(-5841844) || StringTools.hex(this.pixelsBackground.getPixel32(x - 1,y - 1)) == StringTools.hex(-11371243)) && StringTools.hex(this.pixels.getPixel32(x,y - 1)) == StringTools.hex(0)) this.pixels.setPixel32(x,y - 1,1996488704); else if((StringTools.hex(this.pixelsBackground.getPixel32(x + 1,y - 1)) == StringTools.hex(-5841844) || StringTools.hex(this.pixelsBackground.getPixel32(x - 1,y - 1)) == StringTools.hex(-11371243)) && StringTools.hex(this.pixels.getPixel32(x + 1,y - 1)) == StringTools.hex(0)) this.pixels.setPixel32(x + 1,y - 1,1996488704); else if((StringTools.hex(this.pixelsBackground.getPixel32(x - 1,y - 1)) == StringTools.hex(-5841844) || StringTools.hex(this.pixelsBackground.getPixel32(x - 1,y - 1)) == StringTools.hex(-11371243)) && StringTools.hex(this.pixels.getPixel32(x - 1,y - 1)) == StringTools.hex(0)) this.pixels.setPixel32(x - 1,y - 1,1996488704); else this.pixels.setPixel32(x,y,1996488704);
-				}
-			} else if(backgroundColor == StringTools.hex(-5884852)) {
-				if(StringTools.hex(this.pixelsBuffer.getPixel32(x,y)) != StringTools.hex(0)) {
-					this.pixels.setPixel32(x,y,0);
-					if(StringTools.hex(this.pixelsBackground.getPixel32(x,y + 1)) == StringTools.hex(-5884852) && StringTools.hex(this.pixels.getPixel32(x,y + 1)) == StringTools.hex(0)) this.pixels.setPixel32(x,y + 1,1996488704); else if(StringTools.hex(this.pixelsBackground.getPixel32(x + 1,y + 1)) == StringTools.hex(-5884852) && StringTools.hex(this.pixels.getPixel32(x + 1,y + 1)) == StringTools.hex(0)) this.pixels.setPixel32(x + 1,y + 1,1996488704); else if(StringTools.hex(this.pixelsBackground.getPixel32(x - 1,y + 1)) == StringTools.hex(-5884852) && StringTools.hex(this.pixels.getPixel32(x - 1,y + 1)) == StringTools.hex(0)) this.pixels.setPixel32(x - 1,y + 1,1996488704); else this.pixels.setPixel32(x,y,1996488704);
-				}
-			} else if(backgroundColor == StringTools.hex(-5878708)) this.applyRule(this.pixels,this.pixelsBackground,x,y,[1,3,5,7],[1,3,5,7],1996488704); else if(backgroundColor == StringTools.hex(-11757604)) this.applyRule(this.pixels,this.pixelsBackground,x,y,[2,5],[4],1996488704); else if(backgroundColor == StringTools.hex(-15083)) this.applyRule(this.pixels,this.pixelsBackground,x,y,[3],[0,1,2,3,4,5,6,7,8],1996488704); else if(backgroundColor == StringTools.hex(-2795061)) this.applyRule(this.pixels,this.pixelsBackground,x,y,[3,4],[3,4],1996488704); else if(backgroundColor == StringTools.hex(-10919467)) this.applyRule(this.pixels,this.pixelsBackground,x,y,[3,5,6,7,8],[5,6,7,8],1996488704); else if(backgroundColor == StringTools.hex(-8505992)) this.applyRule(this.pixels,this.pixelsBackground,x,y,[3,6],[1,2,5],1996488704); else if(backgroundColor == StringTools.hex(-33515)) this.applyRule(this.pixels,this.pixelsBackground,x,y,[3,6,7,8],[3,4,6,7,8],1996488704); else if(backgroundColor == StringTools.hex(-11371243)) this.applyRule(this.pixels,this.pixelsBackground,x,y,[1,2,3,4,5,6,7,8],[0,1,2,3,4,5,6,7,8],1996488704); else if(backgroundColor == StringTools.hex(-1)) this.pixels.setPixel32(x,y,0);
+			if(backgroundColor == StringTools.hex(-5878708) || this.howManyAroundInBackground(x,y,-5878708) > 2) this.applyRule(x,y,[1,3,5,7],[1,3,5,7],-16777216);
+			if(pixelColor != StringTools.hex(0)) {
+				if(backgroundColor == StringTools.hex(-33515)) this.moveFromTo(x,y,-1,0,-16777216); else if(backgroundColor == StringTools.hex(-5841844)) this.moveFromTo(x,y,0,-1,-16777216); else if(backgroundColor == StringTools.hex(-15083)) this.moveFromTo(x,y,0,1,-16777216); else if(backgroundColor == StringTools.hex(-11757604)) this.moveFromTo(x,y,1,0,-16777216); else if(backgroundColor == StringTools.hex(-1)) this.pixels.setPixel32(x,y,0);
+			}
 		}
 		this.pixelsBuffer = this.pixels.clone();
 		this.pixels.unlock();
-		var _g12 = 0;
-		var _g3 = this.cellsCount.length;
-		while(_g12 < _g3) {
-			var i2 = _g12++;
-			var tfColor = this.debugCellsCount[i2];
-			tfColor.set_text("" + this.cellsCount[i2]);
-		}
 	}
 	,onKeyDown: function(event) {
 		var _g = event.keyCode;
@@ -1013,6 +1005,17 @@ Main.prototype = $extend(flash.display.Sprite.prototype,{
 		_g1.set_y(_g1.get_y() - this.velocityY * delta);
 		this.timeLast = flash.Lib.getTimer();
 	}
+	,whichColorsAreHere: function(x,y) {
+		var colorsArray = new Array();
+		var pixelsArray = this.pixelsBuffer.getPixels(new flash.geom.Rectangle(x - 1,y - 1,3,3));
+		var _g1 = 0;
+		var _g = pixelsArray.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			colorsArray.push(pixelsArray[i]);
+		}
+		return colorsArray;
+	}
 	,howManyAround: function(x,y,target) {
 		var count = 0;
 		if(this.testPosition(x,y)) {
@@ -1044,6 +1047,25 @@ Main.prototype = $extend(flash.display.Sprite.prototype,{
 					if(this.testPosition(x + row,y + col)) {
 						if((row == 0 && col == 0) == false) {
 							if(StringTools.hex(this.pixelsBuffer.getPixel32(x + row,y + col)) != StringTools.hex(target)) count++;
+						}
+					}
+				}
+			}
+			return count;
+		} else return -1;
+	}
+	,howManyAroundInBackground: function(x,y,colorTarget) {
+		var count = 0;
+		if(this.testPosition(x,y)) {
+			var _g = -1;
+			while(_g < 2) {
+				var row = _g++;
+				var _g1 = -1;
+				while(_g1 < 2) {
+					var col = _g1++;
+					if(this.testPosition(x + row,y + col)) {
+						if((row == 0 && col == 0) == false) {
+							if(StringTools.hex(this.pixelsBackground.getPixel32(x + row,y + col)) == StringTools.hex(colorTarget)) count++;
 						}
 					}
 				}
@@ -7006,7 +7028,7 @@ Main.colorBlueDark = -10919467;
 Main.colorPurpleDark = -8505992;
 Main.colorOrange = -33515;
 Main.colorGreenDark = -11371243;
-Main.colorAlive = 1996488704;
+Main.colorAlive = -16777216;
 Main.colorDead = 0;
 DefaultAssetLibrary.className = new haxe.ds.StringMap();
 DefaultAssetLibrary.path = new haxe.ds.StringMap();

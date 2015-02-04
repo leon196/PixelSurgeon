@@ -28,7 +28,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('server', function(target) {
     grunt.task.run([
-      'connect:dev', 'watch'
+      'connect:dev::keepalive'
     ]);
   });
 

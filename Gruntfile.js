@@ -2,10 +2,10 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     jshint: {
-      files: ['Gruntfile.js', 'src/**/*.js', 'test/**/*.js'],
+      files: ['Gruntfile.js', 'src/*.js'],
       options: {
         globals: {
-          jQuery: true
+          jQuery: false
         }
       }
     },
@@ -28,8 +28,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('server', function(target) {
     grunt.task.run([
-      'connect:dev'
-      , 'watch'
+      'connect:dev', 'watch'
     ]);
   });
 

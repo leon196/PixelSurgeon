@@ -6,8 +6,8 @@ PIXI.SimpleFilter = function()
 
     // set the uniforms
     this.uniforms = {
-        uFrame: {type: '2fv', value:new PIXI.Float32Array([1.0, 1.0])}
-        , uPixelSize: {type: '1f', value: 64.0 }
+        uFrame: {type: '2fv', value:new PIXI.Float32Array([1.0, 1.0])},
+        uPixelSize: {type: '1f', value: 64.0 }
     };
 
     this.fragmentSrc = [

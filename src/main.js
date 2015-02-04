@@ -7,7 +7,7 @@ canvas.appendChild(renderer.view);
 
 var drawer = new PIXI.Graphics();
 var drawerFrame = { width: 128, height: 128 };
-var renderTexture = new PIXI.RenderTexture(drawerFrame.width, drawerFrame.height);
+var renderTexture = new PIXI.RenderTexture(drawerFrame.width, drawerFrame.height, null, PIXI.scaleModes.NEAREST);
 var filter = new PIXI.SimpleFilter();
 filter.frame[0] = frame.width;
 filter.frame[1] = frame.height;

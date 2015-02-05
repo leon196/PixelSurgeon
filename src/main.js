@@ -74,15 +74,6 @@ function animate()
     	oscillation = Math.cos(tick * 0.001 + i) * 0.5 + 0.5;
 		var frequenceX = 0.001;// + oscillation * 0.02;
 		var frequenceY = 0.2;
-		drawLine(4, Color.Get(tick + i), from, { 
-			x: (i / count) * drawerFrame.width, 
-			y: drawerFrame.height / 8 + Math.sin((tick + i) * frequenceY) * halfHeight / 4
-		});
-	}
-	for (var i = 0; i < count; ++i) {
-    	oscillation = Math.cos(tick * 0.001 + i) * 0.5 + 0.5;
-		var frequenceX = 0.001;// + oscillation * 0.02;
-		var frequenceY = 0.2;
 		var sinY = Math.sin((tick + i) * frequenceY);
 		var x = (i / count) * drawerFrame.width * 3 - drawerFrame.width;
 		var h = halfHeight / 4;
@@ -99,12 +90,12 @@ function animate()
 		var frequenceY = 0.2;
 		var sinY = Math.sin((tick + i) * frequenceY);
 		var x = (i / count) * drawerFrame.width;
-		var h = halfHeight / 2;
+		var h = halfHeight / 4;
 		var perlinScale = 8;
 		var perlin = noise({x: (x + tick * 0.5) / perlinScale, y: 0, z: 0});
 		var perlin2 = noise({x: (x + tick * 1) / 12, y: 0, z: 0});
-		drawLine(4, Color.Gray(1 - (perlin * 0.5 + 0.5)), from, { 
-			x: x + perlin2 * 16, y: halfHeight - perlin * h });
+		drawLine(4, Color.GetRainbow(1 - (perlin * 0.5 + 0.5)), from, { 
+			x: x + perlin2 * 16, y: h - perlin * h });
 	}
 
 	renderTexture.render(drawer);

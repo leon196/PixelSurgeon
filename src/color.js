@@ -16,27 +16,7 @@ Color.Violet = 0x855FA8;
 Color.VioletMagenta = 0xA763A8;  	
 Color.Magenta = 0xF06EA9;  	
 Color.MagentaRed = 0xF26D7D;
-
-Color.colors = [Color.Red, Color.RedOrange, Color.YellowOrange, Color.Yellow, Color.PeaGreen, Color.YellowGreen, 
-Color.Green, Color.GreenCyan, Color.Cyan, Color.CyanBlue, Color.Blue, Color.BlueViolet, Color.Violet, 
-Color.VioletMagenta, Color.Magenta, Color.MagentaRed];
-
-var rainbowColorCurrentIndex = 0;
-
-Color.Rainbow = function () {
-	rainbowColorCurrentIndex = (rainbowColorCurrentIndex + 1) % Color.colors.length;
-	return Color.colors[rainbowColorCurrentIndex];
-};
-
-Color.GetRainbow = function(ratio) {
-	var index = Math.floor(ratio * Color.colors.length);
-	return Color.colors[index % Color.colors.length];
-}
-
-Color.Get = function(index) {
-	return Color.colors[index % Color.colors.length];
-}
-
+Color.White = 0xffffff;
 Color.Gray10 = 0xEBEBEB;
 Color.Gray15 = 0xE1E1E1;
 Color.Gray20 = 0xD7D7D7;
@@ -55,9 +35,44 @@ Color.Gray80 = 0x464646;
 Color.Gray85 = 0x363636;
 Color.Gray90 = 0x262626;
 Color.Gray95 = 0x111111;
-Color.grays = [Color.Gray10, Color.Gray15, Color.Gray20, Color.Gray25, Color.Gray30, 
+Color.Black = 0x000000;
+
+Color.colors = [Color.Red, Color.RedOrange, Color.YellowOrange, Color.Yellow, Color.PeaGreen, Color.YellowGreen, 
+Color.Green, Color.GreenCyan, Color.Cyan, Color.CyanBlue, Color.Blue, Color.BlueViolet, Color.Violet, 
+Color.VioletMagenta, Color.Magenta, Color.MagentaRed];
+
+Color.colorsMountain = [Color.White, Color.Gray15, Color.Gray30, Color.PeaGreen, Color.YellowGreen, Color.Green, Color.GreenCyan];
+Color.colorsGreen = [0x00ff00, 0x00e500, 0x00cc00, 0x00b200, 0x009900, 0x007f00, 0x006600, 0x004c00, 0x003300, 0x001900, 0x000000];
+
+var rainbowColorCurrentIndex = 0;
+
+Color.Rainbow = function () {
+	rainbowColorCurrentIndex = (rainbowColorCurrentIndex + 1) % Color.colors.length;
+	return Color.colors[rainbowColorCurrentIndex];
+};
+
+Color.GetRainbow = function(ratio) {
+	var index = Math.floor(ratio * Color.colors.length);
+	return Color.colors[index % Color.colors.length];
+}
+
+Color.GetMountain = function(ratio) {
+	var index =Math.floor( ratio * Color.colorsMountain.length);
+	return Color.colorsMountain[index % Color.colorsMountain.length];
+}
+
+Color.GetGreen = function(ratio) {
+	var index =Math.floor( ratio * Color.colorsGreen.length);
+	return Color.colorsGreen[index % Color.colorsGreen.length];
+}
+
+Color.Get = function(index) {
+	return Color.colors[index % Color.colors.length];
+}
+
+Color.grays = [Color.White, Color.Gray10, Color.Gray15, Color.Gray20, Color.Gray25, Color.Gray30, 
 Color.Gray35, Color.Gray40, Color.Gray45, Color.Gray50, Color.Gray55, Color.Gray60, 
-Color.Gray65, Color.Gray70, Color.Gray75, Color.Gray80, Color.Gray85, Color.Gray90, Color.Gray95];
+Color.Gray65, Color.Gray70, Color.Gray75, Color.Gray80, Color.Gray85, Color.Gray90, Color.Gray95, Color.Black];
 
 Color.Gray = function(ratio) {
 	var index = Math.floor(ratio * Color.grays.length);

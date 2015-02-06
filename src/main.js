@@ -9,7 +9,7 @@ var bufferCanvas = document.createElement("canvas");
 var bufferContext = bufferCanvas.getContext('2d');
 
 var drawer = new PIXI.Graphics();
-var globalScale = 8;
+var globalScale = Math.min(frame.width, frame.height) / 256;
 var drawerFrame = { width: Utils.NearestPow2(frame.width / globalScale), height: Utils.NearestPow2(frame.height / globalScale) };
 var renderTexture = new PIXI.RenderTexture(drawerFrame.width, drawerFrame.height, null, PIXI.scaleModes.NEAREST);
 var filter = new PIXI.SimpleFilter();
@@ -26,6 +26,20 @@ var mouseBefore = { x: 0, y: 0 };
 var drawing = false;
 var drawerScale = 2;
 var image;
+var halfWidth = drawerFrame.width / 2;
+var halfHeight = drawerFrame.height / 2;
+
+var curveSegmentCount = drawerFrame.width / 8;
+var lineCount = drawerFrame.height / 16;
+var timeSpeed = 2;
+var perlinScaleX = 0.05;
+var perlinScaleY = 0.01;
+var frequenceX = 20;
+var frequenceY = 8;
+var x = 0;
+var perlin;
+var y;
+var previous = { x: 0, y: 0 };
 
 var loader = new PIXI.AssetLoader(["img/test.png"]);
 loader.onComplete = function() {
@@ -54,8 +68,8 @@ function animate()
 {
 	++tick;
 
-    oscillation = Math.cos(tick * 0.01) * 0.5 + 0.5;
-	filter.pixelSize = Math.pow(2, Math.floor(oscillation * 4) + 6);
+ //    oscillation = Math.cos(tick * 0.01) * 0.5 + 0.5;
+	// filter.pixelSize = Math.pow(2, Math.floor(oscillation * 4) + 6);
 
 	// drawer.lineStyle(0);
 	// drawer.beginFill(0x000000, 0.05);
@@ -63,45 +77,75 @@ function animate()
 	drawer.clear();
 	renderTexture.clear();
 
-	var halfWidth = drawerFrame.width / 2;
-	var halfHeight = drawerFrame.height / 2;
-	var from = mouse;
-	// var to = { 
-	// 	x: halfWidth + Math.cos(tick * frequenceX) * halfWidth, 
-	// 	y: halfHeight + Math.sin(tick * frequenceY) * halfHeight };
-	var count = drawerFrame.width;
-	for (var i = 0; i < count; ++i) {
-    	oscillation = Math.cos(tick * 0.001 + i) * 0.5 + 0.5;
-		var frequenceX = 0.001;// + oscillation * 0.02;
-		var frequenceY = 0.2;
-		var sinY = Math.sin((tick + i) * frequenceY);
-		var x = (i / count) * drawerFrame.width * 3 - drawerFrame.width;
-		var h = halfHeight / 4;
-		var y = drawerFrame.height - h;
-		var perlinScale = 64;
-		var perlin = noise({x: (x + tick * 4) / perlinScale, y: 0, z: 0});
-		drawLine(4, Color.Gray(1 - (perlin * 0.5 + 0.5)), from, { 
-			x: x, y: y - perlin * h });
-	}
-	count *= 2;
-	for (var i = 0; i < count; ++i) {
-    	oscillation = Math.cos(tick * 0.001 + i) * 0.5 + 0.5;
-		var frequenceX = 0.001;// + oscillation * 0.02;
-		var frequenceY = 0.2;
-		var sinY = Math.sin((tick + i) * frequenceY);
-		var x = (i / count) * drawerFrame.width;
-		var h = halfHeight / 4;
-		var perlinScale = 8;
-		var perlin = noise({x: (x + tick * 0.5) / perlinScale, y: 0, z: 0});
-		var perlin2 = noise({x: (x + tick * 1) / 12, y: 0, z: 0});
-		drawLine(4, Color.GetRainbow(1 - (perlin * 0.5 + 0.5)), from, { 
-			x: x + perlin2 * 16, y: h - perlin * h });
+	for (var ligne = 0; ligne < lineCount; ++ligne) {
+		// perlin = noise({x: (i * frequence + tick) * timeSpeed / perlinScale, y: 0, z: 0});
+		// y = halfHeight + perlin * h;
+			// y = (tick + ligne) % drawerFrame.height;
+			// var l = ligne * (4 + (perlin * 4) * 0.5 + 0.5);
+			// y = (tick + l) % (drawerFrame.height);
+			y = ligne * (4 + perlin * 0.5 + 0.5) * (4 + (Math.costick * 0.1) * 0.5 + 0.5);
+
+		// drawer.lineStyle(1, Color.GetRainbow((ligne + tick * 0.1) / lineCount));
+		drawer.moveTo(0, y);
+		previous.x = 0;
+		previous.y = y;
+
+		for (var i = 0; i <= curveSegmentCount; ++i) {
+			perlinY = noise({x: ((ligne + i) * frequenceY + tick * timeSpeed) * perlinScaleY, y: 0, z: (i * frequenceX + tick * timeSpeed) * perlinScaleY});
+			x = (i / curveSegmentCount) * drawerFrame.width;
+			y = ligne * 8 * (1 + (perlinY * 0.5 + 0.5));
+
+
+			var dotdot = Utils.dot(Utils.Normalize({x: x - previous.x, y: y - previous.y}), {x : 0, y: 1});
+			dotdot = Math.abs(dotdot);
+		// drawer.lineStyle(1, Color.Gray(dotdot));
+
+		drawer.lineStyle(1, Color.GetRainbow(dotdot));
+
+			drawer.lineTo(x, drawerFrame.height - y);
+
+			previous.x = x;
+			previous.y = y;
+		}
 	}
 
 	renderTexture.render(drawer);
 
     requestAnimFrame( animate );
     renderer.render(stage);
+
+	// var from = mouse;
+	// var to = { 
+	// 	x: halfWidth + Math.cos(tick * frequenceX) * halfWidth, 
+	// 	y: halfHeight + Math.sin(tick * frequenceY) * halfHeight };
+	// var count = drawerFrame.width;
+	// for (var i = 0; i < count; ++i) {
+ //    	oscillation = Math.cos(tick * 0.001 + i) * 0.5 + 0.5;
+	// 	var frequenceX = 0.001;// + oscillation * 0.02;
+	// 	var frequenceY = 0.2;
+	// 	var sinY = Math.sin((tick + i) * frequenceY);
+	// 	var x = (i / count) * drawerFrame.width * 3 - drawerFrame.width;
+	// 	var h = halfHeight / 4;
+	// 	var y = drawerFrame.height - h;
+	// 	var perlinScale = 64;
+	// 	var perlin = noise({x: (x + tick * 4) / perlinScale, y: 0, z: 0});
+	// 	drawLine(4, Color.Gray(1 - (perlin * 0.5 + 0.5)), from, { 
+	// 		x: x, y: y - perlin * h });
+	// }
+	// count *= 2;
+	// for (var i = 0; i < count; ++i) {
+ //    	oscillation = Math.cos(tick * 0.001 + i) * 0.5 + 0.5;
+	// 	var frequenceX = 0.001;// + oscillation * 0.02;
+	// 	var frequenceY = 0.2;
+	// 	var sinY = Math.sin((tick + i) * frequenceY);
+	// 	var x = (i / count) * drawerFrame.width;
+	// 	var h = halfHeight / 4;
+	// 	var perlinScale = 8;
+	// 	var perlin = noise({x: (x + tick * 0.5) / perlinScale, y: 0, z: 0});
+	// 	var perlin2 = noise({x: (x + tick * 1) / 12, y: 0, z: 0});
+	// 	drawLine(4, Color.GetRainbow(1 - (perlin * 0.5 + 0.5)), from, { 
+	// 		x: x + perlin2 * 16, y: h - perlin * h });
+	// }
 }
 
 function onMouseDown (data) {
@@ -194,7 +238,7 @@ function noise( seed ) {
     var f = fractVec3(seed);
     f.x = f.x*f.x*(3.0-2.0*f.x);
     f.y = f.y*f.y*(3.0-2.0*f.y);
-    f.z = f.y*f.y*(3.0-2.0*f.y);
+    f.z = f.z*f.z*(3.0-2.0*f.z);
     var n = p.x + p.y*57.0 + 113.0*p.z;
     return mix(mix(mix( hash(n+0.0), hash(n+1.0),f.x),
                    mix( hash(n+57.0), hash(n+58.0),f.x),f.y),

@@ -12,21 +12,47 @@ Utils.Length = function (v) { return Math.sqrt(v.x * v.x + v.y * v.y); };
 
 Utils.Normalize = function (v) { var dist = Utils.Distance(v, {x:0, y:0}); return { x: v.x / dist, y: v.y / dist }; }
 
-///// From -> http://www.actionscript.org/forums/showthread.php3?t=176052
+////////////////////////////////////
+// From -> http://www.actionscript.org/forums/showthread.php3?t=176052
 // By abeall
-
 // dot product of two vectors 
 Utils.dot = function (v1,v2) { return (v1.x*v2.x) + (v1.y*v2.y); } ;
-
 // reflect vector 'v' against normalized vector 'n' 
 Utils.Reflect = function (v, n) {     
 	// R = V - 2 * (V · N)     
 	var d = Utils.dot(v,n);  
 	return { x: v.x -2 * d * n.x, y: v.y -2 * d * n.y } 
 };
+////////////////////////////////////
 
-/////
 
+function fract(x) { return x % 1; }
+function fractVec3(v) { return { x: v.x % 1, y: v.y % 1 , z: v.z % 1}; }
+function mix(a, b, ratio) { return a * (1 - ratio) + b * ratio };
+
+////////////////////////////////////
+// hash based 3d value noise
+// function taken from [url]https://www.shadertoy.com/view/XslGRr[/url]
+// Created by inigo quilez - iq/2013
+// License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
+// ported from HLSL to js
+function hash( n ) {
+	return fract(Math.sin(n)*43758.5453);
+}
+function noise( seed ) {
+    // The noise function returns a value in the range -1.0f -> 1.0f
+    var p = { x: Math.floor(seed.x), y : Math.floor(seed.y), z: Math.floor(seed.z) };
+    var f = fractVec3(seed);
+    f.x = f.x*f.x*(3.0-2.0*f.x);
+    f.y = f.y*f.y*(3.0-2.0*f.y);
+    f.z = f.z*f.z*(3.0-2.0*f.z);
+    var n = p.x + p.y*57.0 + 113.0*p.z;
+    return mix(mix(mix( hash(n+0.0), hash(n+1.0),f.x),
+                   mix( hash(n+57.0), hash(n+58.0),f.x),f.y),
+               mix(mix( hash(n+113.0), hash(n+114.0),f.x),
+                   mix( hash(n+170.0), hash(n+171.0),f.x),f.y),f.z);
+}
+////////////////////////////////////
 
 Utils.SubVec2 = function (v1, v2) {
 	return { x: v2.x - v1.x, y: v2.y - v1.y };

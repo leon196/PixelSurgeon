@@ -36,6 +36,7 @@ Engine.stage.mousemove = Engine.stage.touchmove = onMouseMove;
 // Game Logic
 Engine.tick = 0;
 Engine.mouse = { x: 0, y: 0 };
+Engine.mouseDown = false;
 Engine.mouseBefore = { x: 0, y: 0 };
 
 // PIXI Loader
@@ -64,26 +65,14 @@ requestAnimFrame( Engine.Update );
 function onMouseDown (data) {
 	data.originalEvent.preventDefault();
 	Engine.mouse = getCroppedPosition(getRelativePosition(data.global));
-    // Drawer.isDrawing = true;
+    Engine.mouseDown = true;
 }
 
 function onMouseUp (data) {
 	Engine.mouse = getCroppedPosition(getRelativePosition(data.global));
-	// Drawer.isDrawing = false;
+	Engine.mouseDown = false;
 }
 
 function onMouseMove (data) {
 	Engine.mouse = getCroppedPosition(getRelativePosition(data.global));
-}
-
-function getRelativePosition(p) {
-	return { 
-		x: Math.floor((p.x / Engine.frame.width) * Drawer.frame.width), 
-		y: Math.floor((p.y / Engine.frame.height) * Drawer.frame.height) };
-}
-
-function getCroppedPosition(p) {
-	return { 
-		x: Math.max(0, Math.min(Drawer.frame.width, p.x)), 
-		y: Math.max(0, Math.min(Drawer.frame.height, p.y)) };
 }

@@ -1,13 +1,17 @@
 var Drawer = {};
 
-Drawer.Setup = function() {
-
-	var w = Utils.NearestPow2(Engine.frame.width / Parameter.globalScale);
-	var h = Utils.NearestPow2(Engine.frame.height / Parameter.globalScale);
+Drawer.Setup = function() 
+{
+//	var w = Utils.NearestPow2(Engine.frame.width / Parameter.globalScale);
+//	var h = Utils.NearestPow2(Engine.frame.height / Parameter.globalScale);
+	var w = Math.pow(2, Parameter.globalScale);
+	var h = Math.pow(2, Parameter.globalScale);
+    
 	Drawer.frame = { 
 		width: w, 
 		height: h,
-		middle: { x: w / 2, y: h / 2} };
+		middle: { x: w / 2, y: h / 2},
+        min: Math.min(w, h)};
 
 	Drawer.isDrawing = false;
 
@@ -38,58 +42,43 @@ Drawer.Setup = function() {
 
 }
 
-// var curveSegmentCount = Drawer.frame.width / 8;
-// var lineCount = Drawer.frame.height / 16;
-// var timeSpeed = 2;
-// var perlinScaleX = 0.05;
-// var perlinScaleY = 0.01;
-// var frequenceX = 20;
-// var frequenceY = 8;
-// var x = 0;
-// var perlin;
-// var y;
-// var previous = { x: 0, y: 0 };
-
-Drawer.Render = function() {
+// Push graphics to renderTexture
+Drawer.Render = function() 
+{
 	Drawer.renderTexture.render(Drawer.graphics);
 }
 
-Drawer.Line = function(thickness, color, from, to) {
+Drawer.Line = function(thickness, color, from, to) 
+{
 	Drawer.graphics.lineStyle(thickness, color);
 	Drawer.graphics.moveTo(from.x, from.y);
 	Drawer.graphics.lineTo(to.x, to.y);
 }
 
-Drawer.Update = function() {
+Drawer.Update = function() 
+{
+    // Clear PIXI graphics element
+    Drawer.graphics.clear();
 
+    // Clear frame
 	if (Parameter.clearAuto) {
-		Drawer.graphics.clear();
 		Drawer.renderTexture.clear();
 	}
 	
-	if (Parameter.drawing) {
+    /// Pain mode
+	if (Parameter.paintMode && Engine.mouseDown) {
 		Drawer.Line(1, Color.Rainbow(), Drawer.frame.middle, Engine.mouse);
 		Drawer.Render();
 	}
 
-	// for (var ligne = 0; ligne < lineCount; ++ligne) {
-	// 	y = ligne * (4 + perlin * 0.5 + 0.5) * (4 + (Math.costick * 0.1) * 0.5 + 0.5);
-	// 	drawer.moveTo(0, y);
-	// 	previous.x = 0;
-	// 	previous.y = y;
-
-	// 	for (var i = 0; i <= curveSegmentCount; ++i) {
-	// 		perlinY = noise({x: ((ligne + i) * frequenceY + tick * timeSpeed) * perlinScaleY, y: 0, z: (i * frequenceX + tick * timeSpeed) * perlinScaleY});
-	// 		x = (i / curveSegmentCount) * drawerFrame.width;
-	// 		y = ligne * 8 * (1 + (perlinY * 0.5 + 0.5));
-	// 		var dotdot = Utils.dot(Utils.Normalize({x: x - previous.x, y: y - previous.y}), {x : 0, y: 1});
-	// 		dotdot = Math.abs(dotdot);
-	// 		drawer.lineStyle(1, Color.GetRainbow(dotdot));
-	// 		drawer.lineTo(x, drawerFrame.height - y);
-	// 		previous.x = x;
-	// 		previous.y = y;
-	// 	}
-	// }
+    // Effects
+    if (Parameter.effects == "Waves") {
+        Effects.Waves();
+    }
+    else if (Parameter.effects == "Folds") {
+        Effects.Folds();
+    }
+    
 	Drawer.Render();
 }
 
@@ -148,3 +137,15 @@ Drawer.Update = function() {
 	// }
 
 	// renderTexture.render(drawer);
+
+function getRelativePosition(p) {
+	return { 
+		x: Math.floor((p.x / Engine.frame.width) * Drawer.frame.width), 
+		y: Math.floor((p.y / Engine.frame.height) * Drawer.frame.height) };
+}
+
+function getCroppedPosition(p) {
+	return { 
+		x: Math.max(0, Math.min(Drawer.frame.width, p.x)), 
+		y: Math.max(0, Math.min(Drawer.frame.height, p.y)) };
+}
